@@ -1,6 +1,7 @@
 package com.example.foodmanager
 
 import android.os.Bundle
+import android.widget.Button
 import android.widget.ImageButton
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -26,11 +27,11 @@ class RezepteActivity : AppCompatActivity() {
         window.navigationBarColor = resources.getColor(android.R.color.white, theme)
 
         // Find toolbar
-        val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar2)
+        val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
 
-        val btBackToMain: ImageButton = findViewById(R.id.btBackToMain)
-        btBackToMain.setOnClickListener {
+        val Vorratsbutton: Button = findViewById(R.id.btVorrat)
+        Vorratsbutton.setOnClickListener{
             finish()
         }
 
