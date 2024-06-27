@@ -50,7 +50,8 @@ class MainActivity : AppCompatActivity() {
         loadFoodItems()
 
         lvfoodlist.setOnItemLongClickListener { _, _, pos, _ ->
-            val itemName = vorratsliste[pos]
+            val selectedItem = vorratsliste[pos]
+            val itemName = parseItemName(selectedItem)
             showDeleteConfirmationDialog(itemName)
             true
         }
@@ -64,8 +65,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         lvfoodlist.setOnItemClickListener { _, _, pos, _ ->
-            val selectedFoodItem = vorratsliste[pos]
-            showEditFoodItemDialog(selectedFoodItem)
+            val selectedItem = vorratsliste[pos]
+            showEditFoodItemDialog(selectedItem)
         }
     }
 
@@ -225,5 +226,9 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(applicationContext, "Abgebrochen", Toast.LENGTH_SHORT).show()
         }
         builder.show()
+    }
+
+    private fun parseItemName(item: String): String {
+        return item.split(" - ")[0]
     }
 }
