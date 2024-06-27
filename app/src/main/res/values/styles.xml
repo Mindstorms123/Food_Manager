@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="TitleHuge" parent="@style/Base.TextAppearance.AppCompat.Title">
+        <item name="android:textSize">40sp</item>
+    </style>
+
+    <style name="DialogTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/white</item>
+        ...
+        <item name="alertDialogTheme">@style/MyDialogStyle</item>
+    </style>
+
+    <style name="MyDialogStyle" parent="Theme.MaterialComponents.Dialog.Alert">
+        <item name="android:textColor">@color/blue</item>
+        ...
+    </style>
+
+
+</resources>
