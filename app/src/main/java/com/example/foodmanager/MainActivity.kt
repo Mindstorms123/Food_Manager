@@ -1,6 +1,5 @@
 package com.example.foodmanager
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -16,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Observer
-import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -84,37 +83,37 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addFoodItem(name: String, quantity: Int, amountInGrams: Int) {
-        CoroutineScope(Dispatchers.IO).launch {
+        lifecycleScope.launch(Dispatchers.IO) {
             val foodItem = FoodItem(name = name, quantity = quantity, amountInGrams = amountInGrams)
             foodItemDao.insert(foodItem)
+            withContext(Dispatchers.Main) {
+                loadFoodItems()
+            }
         }
     }
 
     private fun deleteFoodItem(name: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val foodItem = findFoodItemByName(name)
+        lifecycleScope.launch(Dispatchers.IO) {
+            val foodItem = foodItemDao.findByName(name)
             foodItem?.let {
                 foodItemDao.delete(it)
+                withContext(Dispatchers.Main) {
+                    loadFoodItems()
+                }
             }
         }
     }
 
-    private suspend fun findFoodItemByName(name: String): FoodItem? {
-        return withContext(Dispatchers.IO) {
-            var result: FoodItem? = null
-            var index = 0
-            var item: FoodItem? = foodItemDao.getNext(index)
-
-            while (item != null) {
-                if (item.name == name) {
-                    result = item
-                    break
+    private fun updateFoodItem(name: String, quantity: Int, amountInGrams: Int) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val foodItem = foodItemDao.findByName(name)
+            foodItem?.let {
+                val updatedFoodItem = it.copy(quantity = quantity, amountInGrams = amountInGrams)
+                foodItemDao.update(updatedFoodItem)
+                withContext(Dispatchers.Main) {
+                    loadFoodItems()
                 }
-                index++
-                item = foodItemDao.getNext(index)
             }
-
-            result
         }
     }
 
@@ -122,34 +121,9 @@ class MainActivity : AppCompatActivity() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Hinzufügen")
 
-        val input = EditText(this)
-        input.hint = "Text eingeben"
-        input.inputType = InputType.TYPE_CLASS_TEXT
-
-        builder.setView(input)
-
-        builder.setPositiveButton("OK") { _, _ ->
-            val eingabe = input.text.toString()
-            if (eingabe.isEmpty()) {
-                Toast.makeText(applicationContext, "Kein Inhalt", Toast.LENGTH_SHORT).show()
-            } else {
-                addFoodItem(eingabe, 0, 0) // Default quantity and amountInGrams to 0
-            }
-        }
-
-        builder.setNegativeButton("Abbrechen") { _, _ ->
-            Toast.makeText(applicationContext, "Abgebrochen", Toast.LENGTH_SHORT).show()
-        }
-
-        builder.show()
-    }
-
-    private fun showEditFoodItemDialog(foodItemName: String) {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Bearbeiten: $foodItemName")
-
-        var quantity = 0
-        var amountInGrams = 0
+        val nameInput = EditText(this)
+        nameInput.hint = "Name eingeben"
+        nameInput.inputType = InputType.TYPE_CLASS_TEXT
 
         val quantityInput = EditText(this)
         quantityInput.hint = "Anzahl eingeben"
@@ -161,16 +135,64 @@ class MainActivity : AppCompatActivity() {
 
         val layout = LinearLayout(this)
         layout.orientation = LinearLayout.VERTICAL
+        layout.addView(nameInput)
         layout.addView(quantityInput)
         layout.addView(amountInput)
 
         builder.setView(layout)
 
         builder.setPositiveButton("OK") { _, _ ->
-            quantity = quantityInput.text.toString().toIntOrNull() ?: 0
-            amountInGrams = amountInput.text.toString().toIntOrNull() ?: 0
+            val name = nameInput.text.toString()
+            val quantity = quantityInput.text.toString().toIntOrNull() ?: 0
+            val amountInGrams = amountInput.text.toString().toIntOrNull() ?: 0
 
-            updateFoodItem(foodItemName, quantity, amountInGrams)
+            if (name.isEmpty()) {
+                Toast.makeText(applicationContext, "Kein Name eingegeben", Toast.LENGTH_SHORT).show()
+            } else {
+                addFoodItem(name, quantity, amountInGrams)
+            }
+        }
+
+        builder.setNegativeButton("Abbrechen") { _, _ ->
+            Toast.makeText(applicationContext, "Abgebrochen", Toast.LENGTH_SHORT).show()
+        }
+
+        builder.show()
+    }
+
+    private fun showEditFoodItemDialog(selectedFoodItem: String) {
+        val parts = selectedFoodItem.split(" - ", " Stück - ", "g")
+        if (parts.size < 3) return
+
+        val foodItemName = parts[0]
+        val foodItemQuantity = parts[1].toIntOrNull() ?: 0
+        val foodItemAmountInGrams = parts[2].toIntOrNull() ?: 0
+
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Bearbeiten: $foodItemName")
+
+        val quantityInput = EditText(this)
+        quantityInput.hint = "Anzahl eingeben"
+        quantityInput.inputType = InputType.TYPE_CLASS_NUMBER
+        quantityInput.setText(foodItemQuantity.toString())
+
+        val amountInput = EditText(this)
+        amountInput.hint = "Menge in Gramm eingeben"
+        amountInput.inputType = InputType.TYPE_CLASS_NUMBER
+        amountInput.setText(foodItemAmountInGrams.toString())
+
+        val layout = LinearLayout(this)
+        layout.orientation = LinearLayout.VERTICAL
+        layout.addView(quantityInput)
+        layout.addView(amountInput)
+
+        builder.setView(layout)
+
+        builder.setPositiveButton("OK") { _, _ ->
+            val newQuantity = quantityInput.text.toString().toIntOrNull() ?: 0
+            val newAmountInGrams = amountInput.text.toString().toIntOrNull() ?: 0
+
+            updateFoodItem(foodItemName, newQuantity, newAmountInGrams)
         }
 
         builder.setNegativeButton("Abbrechen") { dialog, _ ->
@@ -178,16 +200,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         builder.show()
-    }
-
-    private fun updateFoodItem(name: String, quantity: Int, amountInGrams: Int) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val foodItem = findFoodItemByName(name)
-            foodItem?.let {
-                val updatedFoodItem = it.copy(quantity = quantity, amountInGrams = amountInGrams)
-                foodItemDao.update(updatedFoodItem)
-            }
-        }
     }
 
     private fun startRezepteActivity() {

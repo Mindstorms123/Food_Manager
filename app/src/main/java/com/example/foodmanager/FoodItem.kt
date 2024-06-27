@@ -8,5 +8,5 @@ data class FoodItem(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val name: String,
     var quantity: Int = 0,
-    val amountInGrams: Int = 0
+    var amountInGrams: Int = 0
 )
