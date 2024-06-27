@@ -1,6 +1,6 @@
 package com.example.foodmanager
 
-import android.content.Context
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
@@ -20,9 +20,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@SuppressLint("StaticFieldLeak")
 private lateinit var lvfoodlist: ListView
+@SuppressLint("StaticFieldLeak")
 private lateinit var Btadd: Button
+@SuppressLint("StaticFieldLeak")
 private lateinit var BtVorrat: Button
+@SuppressLint("StaticFieldLeak")
 private lateinit var BtRezepte: Button
 private lateinit var itemAdapter: ArrayAdapter<String>
 private lateinit var db: AppDatabase
