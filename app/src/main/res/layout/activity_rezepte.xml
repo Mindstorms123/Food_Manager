@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -12,7 +13,7 @@
         android:layout_height="match_parent"
         android:background="#FFFFFF"
         android:foregroundTint="#2E383E"
-        tools:context=".MainActivity">
+        tools:context=".RezepteActivity">
 
         <Button
             android:id="@+id/btVorrat"
@@ -51,7 +52,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="85dp"
-            android:background="?attr/colorPrimary"
+            android:background="@color/white"
             android:backgroundTint="#171717"
             android:minHeight="?attr/actionBarSize"
             android:theme="?attr/actionBarTheme"
@@ -64,12 +65,12 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
             android:layout_width="358dp"
-            android:layout_height="717dp"
+            android:layout_height="701dp"
             android:layout_below="@id/toolbar"
             android:padding="16dp"
-            tools:layout_editor_absoluteX="0dp"
-            tools:layout_editor_absoluteY="83dp"
-            tools:ignore="MissingConstraints" />
+            app:layout_constraintTop_toBottomOf="@+id/toolbar"
+            tools:ignore="MissingConstraints"
+            tools:layout_editor_absoluteX="0dp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

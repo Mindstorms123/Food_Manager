@@ -7,8 +7,9 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 class RecipeAdapter(
-    private val recipes: List<Recipe>,
-    private val onRecipeClick: (Recipe) -> Unit
+    private var recipes: List<Recipe>,
+    private val onRecipeClick: (Recipe) -> Unit,
+    private val onRecipeLongClick: (Recipe) -> Unit //Added long clicker handler
 ) : RecyclerView.Adapter<RecipeAdapter.RecipeViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecipeViewHolder {
@@ -34,5 +35,11 @@ class RecipeAdapter(
 
             itemView.setOnClickListener { onRecipeClick(recipe) }
         }
+    }
+
+    // Method to update the list of recipes and notify the adapter
+    fun updateRecipes(newRecipes: List<Recipe>) {
+        this.recipes = newRecipes
+        notifyDataSetChanged()
     }
 }

@@ -3,6 +3,7 @@ package com.example.foodmanager
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Delete
 
 @Dao
 interface RecipeDao {
@@ -15,4 +16,7 @@ interface RecipeDao {
 
     @Insert
     fun insertRecipe(recipe: Recipe)
+
+    @Delete
+    fun deleteRecipe(recipe: Recipe)  // New method to delete a recipe
 }

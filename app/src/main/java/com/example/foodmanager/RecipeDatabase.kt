@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Recipe::class], version = 1)
+@Database(entities = [Recipe::class], version = 2) // Increment version number
 abstract class RecipeDatabase : RoomDatabase() {
 
     abstract fun recipeDao(): RecipeDao
@@ -20,7 +20,9 @@ abstract class RecipeDatabase : RoomDatabase() {
                     context.applicationContext,
                     RecipeDatabase::class.java,
                     "recipe_database"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration() // Use this for simplicity, but consider handling migrations properly in production
+                    .build()
                 INSTANCE = instance
                 instance
             }

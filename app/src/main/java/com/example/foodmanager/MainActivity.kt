@@ -19,6 +19,8 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.view.Window
+import android.view.WindowManager
 
 @SuppressLint("StaticFieldLeak")
 private lateinit var lvfoodlist: ListView
