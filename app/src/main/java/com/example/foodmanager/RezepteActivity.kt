@@ -2,10 +2,11 @@ package com.example.foodmanager
 
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.children
@@ -83,23 +84,141 @@ class RezepteActivity : AppCompatActivity() {
         ingredientsEditText.setText(recipe.ingredients)
         descriptionEditText.setText(recipe.description)
 
-        // Split the steps and add them to the container
-        recipe.steps.split("\n").forEachIndexed { index, step ->
+        // Add steps to the container
+        recipe.steps.forEachIndexed { index, step ->
             addStepField(stepsContainer, index + 1, step)
         }
 
-        // Disable editing in the view mode
-        listOf(titleEditText, difficultyEditText, durationEditText, ingredientsEditText, descriptionEditText)
-            .forEach { it.isEnabled = false }
-
-        dialogView.findViewById<Button>(R.id.btnAddStep).isEnabled = false
-        stepsContainer.children.forEach { it.isEnabled = false }
+        // Disable editing in view mode
+        setEditMode(dialogView)
 
         val alertDialogBuilder = AlertDialog.Builder(this)
         alertDialogBuilder.setView(dialogView)
         alertDialogBuilder.setTitle("Rezeptinformationen")
-        alertDialogBuilder.setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+
+        alertDialogBuilder.setPositiveButton("OK") { dialog, _ ->
+            dialog.dismiss()
+        }
+
+        alertDialogBuilder.setNegativeButton("Löschen") { _, _ ->
+            showDeleteRecipeDialog(recipe)
+        }
+
+        alertDialogBuilder.setNeutralButton("Bearbeiten") { _, _ ->
+            showModifyRecipeDialog(recipe)
+        }
+
         alertDialogBuilder.create().show()
+    }
+
+    private fun showModifyRecipeDialog(recipe: Recipe) {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_recipe_dynamic, null)
+
+        val titleEditText = dialogView.findViewById<EditText>(R.id.etTitle)
+        val difficultyEditText = dialogView.findViewById<EditText>(R.id.etDifficulty)
+        val durationEditText = dialogView.findViewById<EditText>(R.id.etDuration)
+        val ingredientsEditText = dialogView.findViewById<EditText>(R.id.etIngredients)
+        val descriptionEditText = dialogView.findViewById<EditText>(R.id.etDescription)
+        val stepsContainer = dialogView.findViewById<LinearLayout>(R.id.stepsContainer)
+        val addStepButton = dialogView.findViewById<Button>(R.id.btnAddStep)
+
+        // Fill in the existing data
+        titleEditText.setText(recipe.title)
+        difficultyEditText.setText(recipe.difficulty)
+        durationEditText.setText(recipe.duration.toString())
+        ingredientsEditText.setText(recipe.ingredients)
+        descriptionEditText.setText(recipe.description)
+
+        // Add existing steps to the container
+        recipe.steps.forEachIndexed { index, step ->
+            addStepField(stepsContainer, index + 1, step)
+        }
+
+        addStepButton.setOnClickListener {
+            addStepField(stepsContainer, stepsContainer.childCount + 1)
+        }
+
+        val alertDialogBuilder = AlertDialog.Builder(this)
+        alertDialogBuilder.setView(dialogView)
+        alertDialogBuilder.setTitle("Rezept bearbeiten")
+
+        alertDialogBuilder.setPositiveButton("Speichern") { _, _ ->
+            if (validateRecipeFields(titleEditText, difficultyEditText, durationEditText, ingredientsEditText, descriptionEditText, stepsContainer)) {
+                val updatedRecipe = recipe.copy(
+                    title = titleEditText.text.toString(),
+                    difficulty = difficultyEditText.text.toString(),
+                    duration = durationEditText.text.toString().toIntOrNull() ?: 0,
+                    ingredients = ingredientsEditText.text.toString(),
+                    description = descriptionEditText.text.toString(),
+                    steps = stepsContainer.children.map { (it as EditText).text.toString() }.toList() // Ensure this is List<String>
+                )
+                updateRecipeInDatabase(updatedRecipe)
+            }
+        }
+
+        alertDialogBuilder.setNegativeButton("Abbrechen") { dialog, _ ->
+            Toast.makeText(this, "Bearbeiten abgebrochen", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+        }
+
+        val alertDialog = alertDialogBuilder.create()
+        alertDialog.show()
+    }
+
+    private fun validateRecipeFields(
+        titleEditText: EditText,
+        difficultyEditText: EditText,
+        durationEditText: EditText,
+        ingredientsEditText: EditText,
+        descriptionEditText: EditText,
+        stepsContainer: LinearLayout
+    ): Boolean {
+        val fields = arrayOf(titleEditText, difficultyEditText, durationEditText, ingredientsEditText, descriptionEditText)
+        for (field in fields) {
+            if (field.text.toString().isBlank()) {
+                Toast.makeText(this, "${field.hint} darf nicht leer sein", Toast.LENGTH_SHORT).show()
+                return false
+            }
+        }
+
+        if (stepsContainer.childCount == 0 || (stepsContainer.getChildAt(0) as EditText).text.toString().isBlank()) {
+            Toast.makeText(this, "Mindestens ein Schritt ist erforderlich", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        return true
+    }
+
+    private fun addStepField(stepsContainer: LinearLayout, stepNumber: Int, stepText: String = "") {
+        val stepEditText = EditText(this).apply {
+            hint = "Schritt $stepNumber"
+            setText(stepText)
+            setTextColor(resources.getColor(android.R.color.black, theme))
+        }
+        stepsContainer.addView(stepEditText)
+    }
+
+    private fun setEditMode(dialogView: View) {
+        dialogView.findViewById<EditText>(R.id.etTitle).isEnabled = false
+        dialogView.findViewById<EditText>(R.id.etDifficulty).isEnabled = false
+        dialogView.findViewById<EditText>(R.id.etDuration).isEnabled = false
+        dialogView.findViewById<EditText>(R.id.etIngredients).isEnabled = false
+        dialogView.findViewById<EditText>(R.id.etDescription).isEnabled = false
+        dialogView.findViewById<LinearLayout>(R.id.stepsContainer).children.forEach { view ->
+            view.isEnabled = false
+        }
+        dialogView.findViewById<Button>(R.id.btnAddStep).visibility = Button.GONE
+    }
+
+    private fun updateRecipeInDatabase(recipe: Recipe) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            recipeDao.updateRecipe(recipe)
+            val updatedRecipes = recipeDao.getAllRecipes()
+            withContext(Dispatchers.Main) {
+                adapter.updateRecipes(updatedRecipes)
+                Toast.makeText(this@RezepteActivity, "Rezept aktualisiert", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun showAddRecipeDialog() {
@@ -110,8 +229,9 @@ class RezepteActivity : AppCompatActivity() {
         val ingredientsEditText = dialogView.findViewById<EditText>(R.id.etIngredients)
         val descriptionEditText = dialogView.findViewById<EditText>(R.id.etDescription)
         val stepsContainer = dialogView.findViewById<LinearLayout>(R.id.stepsContainer)
+        val addStepButton = dialogView.findViewById<Button>(R.id.btnAddStep)
 
-        dialogView.findViewById<Button>(R.id.btnAddStep).setOnClickListener {
+        addStepButton.setOnClickListener {
             addStepField(stepsContainer, stepsContainer.childCount + 1)
         }
 
@@ -120,40 +240,26 @@ class RezepteActivity : AppCompatActivity() {
         alertDialogBuilder.setTitle("Neues Rezept hinzufügen")
 
         alertDialogBuilder.setPositiveButton("Hinzufügen") { _, _ ->
-            val title = titleEditText.text.toString()
-            val difficulty = difficultyEditText.text.toString()
-            val duration = durationEditText.text.toString().toIntOrNull() ?: 0
-            val ingredients = ingredientsEditText.text.toString()
-            val description = descriptionEditText.text.toString()
-            val steps = stepsContainer.children.map { (it as EditText).text.toString() }.joinToString("\n")
-
-            if (title.isNotBlank() && difficulty.isNotBlank() && duration > 0) {
+            if (validateRecipeFields(titleEditText, difficultyEditText, durationEditText, ingredientsEditText, descriptionEditText, stepsContainer)) {
                 val newRecipe = Recipe(
-                    title = title,
-                    difficulty = difficulty,
-                    duration = duration,
-                    ingredients = ingredients,
-                    description = description,
-                    steps = steps
+                    title = titleEditText.text.toString(),
+                    difficulty = difficultyEditText.text.toString(),
+                    duration = durationEditText.text.toString().toIntOrNull() ?: 0,
+                    ingredients = ingredientsEditText.text.toString(),
+                    description = descriptionEditText.text.toString(),
+                    steps = stepsContainer.children.map { (it as EditText).text.toString() }.toList() // Ensure this is List<String>
                 )
                 addRecipeToDatabase(newRecipe)
             }
         }
 
         alertDialogBuilder.setNegativeButton("Abbrechen") { dialog, _ ->
+            Toast.makeText(this, "Hinzufügen abgebrochen", Toast.LENGTH_SHORT).show()
             dialog.dismiss()
         }
 
         val alertDialog = alertDialogBuilder.create()
         alertDialog.show()
-    }
-
-    private fun addStepField(stepsContainer: LinearLayout, stepNumber: Int, stepText: String = "") {
-        val stepEditText = EditText(this).apply {
-            hint = "Schritt $stepNumber"
-            setText(stepText)
-        }
-        stepsContainer.addView(stepEditText)
     }
 
     private fun addRecipeToDatabase(recipe: Recipe) {
@@ -162,6 +268,7 @@ class RezepteActivity : AppCompatActivity() {
             val updatedRecipes = recipeDao.getAllRecipes()
             withContext(Dispatchers.Main) {
                 adapter.updateRecipes(updatedRecipes)
+                Toast.makeText(this@RezepteActivity, "Rezept hinzugefügt", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -179,8 +286,7 @@ class RezepteActivity : AppCompatActivity() {
             dialog.dismiss()
         }
 
-        val alertDialog = alertDialogBuilder.create()
-        alertDialog.show()
+        alertDialogBuilder.create().show()
     }
 
     private fun deleteRecipeFromDatabase(recipe: Recipe) {
@@ -189,6 +295,7 @@ class RezepteActivity : AppCompatActivity() {
             val updatedRecipes = recipeDao.getAllRecipes()
             withContext(Dispatchers.Main) {
                 adapter.updateRecipes(updatedRecipes)
+                Toast.makeText(this@RezepteActivity, "Rezept gelöscht", Toast.LENGTH_SHORT).show()
             }
         }
     }

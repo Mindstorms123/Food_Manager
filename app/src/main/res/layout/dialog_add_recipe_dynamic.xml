@@ -9,44 +9,95 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- Title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Titel"
+            android:textStyle="bold"
+            android:paddingBottom="4dp"
+            android:textColor="#000000" />
+
         <EditText
             android:id="@+id/etTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Titel" />
+            android:textColor="#000000" />
+
+        <!-- Difficulty -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Schwierigkeitsgrad"
+            android:textStyle="bold"
+            android:paddingTop="8dp"
+            android:paddingBottom="4dp"
+            android:textColor="#000000" />
 
         <EditText
             android:id="@+id/etDifficulty"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Schwierigkeitsgrad" />
+            android:textColor="#000000" />
+
+        <!-- Duration -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Dauer in Minuten"
+            android:textStyle="bold"
+            android:paddingTop="8dp"
+            android:paddingBottom="4dp"
+            android:textColor="#000000" />
 
         <EditText
             android:id="@+id/etDuration"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Dauer in Minuten"
-            android:inputType="number" />
+            android:inputType="number"
+            android:textColor="#000000" />
+
+        <!-- Ingredients -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Zutaten"
+            android:textStyle="bold"
+            android:paddingTop="8dp"
+            android:paddingBottom="4dp"
+            android:textColor="#000000" />
 
         <EditText
             android:id="@+id/etIngredients"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Zutaten" />
+            android:textColor="#000000" />
+
+        <!-- Description -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Beschreibung"
+            android:textStyle="bold"
+            android:paddingTop="8dp"
+            android:paddingBottom="4dp"
+            android:textColor="#000000" />
 
         <EditText
             android:id="@+id/etDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Beschreibung" />
+            android:textColor="#000000" />
 
+        <!-- Steps -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Schritte"
             android:textStyle="bold"
-            android:paddingTop="16dp"
-            android:paddingBottom="8dp" />
+            android:paddingTop="8dp"
+            android:paddingBottom="4dp"
+            android:textColor="#000000" />
 
         <LinearLayout
             android:id="@+id/stepsContainer"
@@ -54,12 +105,14 @@
             android:layout_height="wrap_content"
             android:orientation="vertical" />
 
+        <!-- Add Step Button -->
         <Button
             android:id="@+id/btnAddStep"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Schritt hinzufügen"
             android:layout_gravity="center_horizontal"
-            android:padding="8dp" />
+            android:padding="8dp"
+            android:visibility="visible" />
     </LinearLayout>
 </ScrollView>
