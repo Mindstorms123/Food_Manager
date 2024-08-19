@@ -4,8 +4,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.children
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -64,34 +67,53 @@ class RezepteActivity : AppCompatActivity() {
     }
 
     private fun showRecipeInfoDialog(recipe: Recipe) {
-        val alertDialogBuilder = AlertDialog.Builder(this)
-        alertDialogBuilder.setTitle("Rezeptinformationen")
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_recipe_dynamic, null)
 
-        val infoMessage = """
-            Titel: ${recipe.title}
-            Schwierigkeitsgrad: ${recipe.difficulty}
-            Dauer: ${recipe.duration} Minuten
-            Zutaten: ${recipe.ingredients}
-            Beschreibung: ${recipe.description}
-            Schritte: ${recipe.steps}
-        """.trimIndent()
-
-        alertDialogBuilder.setMessage(infoMessage)
-        alertDialogBuilder.setPositiveButton("OK") { dialog, _ ->
-            dialog.dismiss()
-        }
-        val alertDialog = alertDialogBuilder.create()
-        alertDialog.show()
-    }
-
-    private fun showAddRecipeDialog() {
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_recipe, null)
         val titleEditText = dialogView.findViewById<EditText>(R.id.etTitle)
         val difficultyEditText = dialogView.findViewById<EditText>(R.id.etDifficulty)
         val durationEditText = dialogView.findViewById<EditText>(R.id.etDuration)
         val ingredientsEditText = dialogView.findViewById<EditText>(R.id.etIngredients)
         val descriptionEditText = dialogView.findViewById<EditText>(R.id.etDescription)
-        val stepsEditText = dialogView.findViewById<EditText>(R.id.etSteps)
+        val stepsContainer = dialogView.findViewById<LinearLayout>(R.id.stepsContainer)
+
+        // Fill in the existing data
+        titleEditText.setText(recipe.title)
+        difficultyEditText.setText(recipe.difficulty)
+        durationEditText.setText(recipe.duration.toString())
+        ingredientsEditText.setText(recipe.ingredients)
+        descriptionEditText.setText(recipe.description)
+
+        // Split the steps and add them to the container
+        recipe.steps.split("\n").forEachIndexed { index, step ->
+            addStepField(stepsContainer, index + 1, step)
+        }
+
+        // Disable editing in the view mode
+        listOf(titleEditText, difficultyEditText, durationEditText, ingredientsEditText, descriptionEditText)
+            .forEach { it.isEnabled = false }
+
+        dialogView.findViewById<Button>(R.id.btnAddStep).isEnabled = false
+        stepsContainer.children.forEach { it.isEnabled = false }
+
+        val alertDialogBuilder = AlertDialog.Builder(this)
+        alertDialogBuilder.setView(dialogView)
+        alertDialogBuilder.setTitle("Rezeptinformationen")
+        alertDialogBuilder.setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+        alertDialogBuilder.create().show()
+    }
+
+    private fun showAddRecipeDialog() {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_recipe_dynamic, null)
+        val titleEditText = dialogView.findViewById<EditText>(R.id.etTitle)
+        val difficultyEditText = dialogView.findViewById<EditText>(R.id.etDifficulty)
+        val durationEditText = dialogView.findViewById<EditText>(R.id.etDuration)
+        val ingredientsEditText = dialogView.findViewById<EditText>(R.id.etIngredients)
+        val descriptionEditText = dialogView.findViewById<EditText>(R.id.etDescription)
+        val stepsContainer = dialogView.findViewById<LinearLayout>(R.id.stepsContainer)
+
+        dialogView.findViewById<Button>(R.id.btnAddStep).setOnClickListener {
+            addStepField(stepsContainer, stepsContainer.childCount + 1)
+        }
 
         val alertDialogBuilder = AlertDialog.Builder(this)
         alertDialogBuilder.setView(dialogView)
@@ -103,7 +125,7 @@ class RezepteActivity : AppCompatActivity() {
             val duration = durationEditText.text.toString().toIntOrNull() ?: 0
             val ingredients = ingredientsEditText.text.toString()
             val description = descriptionEditText.text.toString()
-            val steps = stepsEditText.text.toString()
+            val steps = stepsContainer.children.map { (it as EditText).text.toString() }.joinToString("\n")
 
             if (title.isNotBlank() && difficulty.isNotBlank() && duration > 0) {
                 val newRecipe = Recipe(
@@ -124,6 +146,14 @@ class RezepteActivity : AppCompatActivity() {
 
         val alertDialog = alertDialogBuilder.create()
         alertDialog.show()
+    }
+
+    private fun addStepField(stepsContainer: LinearLayout, stepNumber: Int, stepText: String = "") {
+        val stepEditText = EditText(this).apply {
+            hint = "Schritt $stepNumber"
+            setText(stepText)
+        }
+        stepsContainer.addView(stepEditText)
     }
 
     private fun addRecipeToDatabase(recipe: Recipe) {
