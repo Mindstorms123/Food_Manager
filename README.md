@@ -1,4 +1,5 @@
 # Food_Manager
+![Food Manager_transparent-](https://github.com/user-attachments/assets/2f58eb38-68fc-4fcc-b43f-8bc8dfdf3b92)
 
 I try to make an app, that tracks the food you have at home, to reduce the waste of Food
 
